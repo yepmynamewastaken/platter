@@ -1,4 +1,5 @@
 use std::io::{Read, Seek};
+use std::io::Write;
 use crate::guid::Guid;
 
 #[derive(Debug, Clone)]
@@ -26,7 +27,8 @@ pub struct GuidPartitionTable {
     pub number_of_partition_entries: u32,
     pub size_of_partition_entry: u32,
     pub partition_entry_array_crc32: u32,
-    pub partitions: Vec<GptPartition>
+    pub partitions: Vec<GptPartition>,
+    data: Vec<u8>
 }
 
 impl GuidPartitionTable {
@@ -77,7 +79,10 @@ impl GuidPartitionTable {
             });
         }
 
-        println!("Read GPT OK");
+        let gpt_buffer_size = 512 * (number_of_partition_entries as usize);
+        let mut gpt_buffer = vec![0; gpt_buffer_size];
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        file.read_exact(&mut gpt_buffer).unwrap();
 
         GuidPartitionTable {
             signature,
@@ -94,9 +99,15 @@ impl GuidPartitionTable {
             number_of_partition_entries,
             size_of_partition_entry,
             partition_entry_array_crc32,
-            partitions
+            partitions,
+            data: gpt_buffer
         }
+    }
 
+    pub fn read_boot_record_to_file(&self, path: &str) -> Result<(), std::io::Error> {
+        let mut file = std::fs::File::create(path)?;
+        file.write_all(&self.data)?;
+        Ok(())
     }
 
     pub fn get_partition_count(&self) -> usize {

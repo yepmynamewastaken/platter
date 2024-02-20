@@ -50,6 +50,14 @@ impl OpenedDisk {
         }
     }
 
+    pub fn read_boot_record_to_file(&self, path: &str) -> Result<(), std::io::Error> {
+
+        match self.scheme {
+            PartitionScheme::Mbr => self.mbr.read_boot_record_to_file(path),
+            PartitionScheme::Gpt => self.gpt.as_ref().unwrap().read_boot_record_to_file(path),
+        }
+    }
+
     pub fn get_partition_count(&self) -> usize {
         match self.scheme {
             PartitionScheme::Mbr => self.mbr.get_partition_count(),

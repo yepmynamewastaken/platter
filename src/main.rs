@@ -30,6 +30,8 @@ fn main() {
                     println!("No partition found");
                 }
             }
+            println!("Saving boot record to boot_record.img");
+            disk.read_boot_record_to_file("boot_record.img").unwrap();
         },
         Err(e) => {
             println!("Error: {:?}", e);

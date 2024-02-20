@@ -74,7 +74,8 @@ pub struct MasterBootRecord {
     pub partitions: [MbrPartition; 4],
     pub bootsector: u16,
 
-    pub has_gpt: bool
+    pub has_gpt: bool,
+    data: [u8; 512]
 }
 
 impl MasterBootRecord {
@@ -102,8 +103,15 @@ impl MasterBootRecord {
             reserved: u16::from_be_bytes([buffer[444], buffer[445]]),
             partitions,
             bootsector: u16::from_be_bytes([buffer[510], buffer[511]]),
-            has_gpt: partitions[0].p_type == 0xEE
+            has_gpt: partitions[0].p_type == 0xEE,
+            data: buffer
         }
+    }
+
+    pub fn read_boot_record_to_file(&self, path: &str) -> Result<(), std::io::Error> {
+        let mut file = std::fs::File::create(path)?;
+        file.write_all(&self.data)?;
+        Ok(())
     }
 
     pub fn get_partition_count(&self) -> usize {
